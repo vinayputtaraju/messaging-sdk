@@ -1,0 +1,11 @@
+messaging:
+  channel: "JMSService"
+  jmsQueues:
+    sample1:
+      destinationQueueName: "sampleQueue"
+      sendMessage: true
+      respondMessage: true
+    sample2:
+      destinationQueueName: "sampleQueue"
+      sendMessage: true
+      respondMessage: true
