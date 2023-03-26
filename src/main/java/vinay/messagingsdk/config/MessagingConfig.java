@@ -12,7 +12,7 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "messaging")
 public class MessagingConfig {
 
-    private String channel = "SQSService";
+    private String channel;
     private Map<String, SQSConfig> sqsQueues = new HashMap<>();
     private Map<String, JMSConfig> jmsQueues = new HashMap<>();
     int defaultReceiveTimeout = 10;

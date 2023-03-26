@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import vinay.messagingsdk.MessagingService;
 import vinay.messagingsdk.channel.MessagingChannelService;
 import vinay.messagingsdk.config.MessagingConfig;
@@ -23,6 +24,8 @@ public class MessagingServiceBean implements MessagingService {
 
     @Override
     public MessageResponse sendAndReceiveMessage(MessageRequest messageRequest) throws MessagingException {
+        if(ObjectUtils.isEmpty(messagingConfig.getChannel()))
+            throw new MessagingException("Messaging channel not defined");
         try {
             MessagingChannelService messagingChannelService=applicationContext
                     .getBean(messagingConfig.getChannel(),MessagingChannelService.class);

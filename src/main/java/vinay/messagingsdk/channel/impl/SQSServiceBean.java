@@ -79,6 +79,7 @@ public class SQSServiceBean implements MessagingChannelService {
                 SQSMessageConsumer sqsMessageConsumer = SQSMessageConsumerBuilder.standard().withAmazonSQS(sqsClient)
                         .withQueueUrl(v.getQueueUrl()).withPollingThreadCount(v.getPollingThreadCount())
                         .withConsumer(message -> this.respondMessage(message, k))
+                        .withMaxWaitTimeSeconds(30)
                         .withExceptionHandler(e -> this.exceptionHandler(e, k)).build();
                 sqsMessageConsumers.put(k, sqsMessageConsumer);
                 sqsMessageConsumer.start();
