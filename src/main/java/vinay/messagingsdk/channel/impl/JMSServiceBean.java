@@ -43,7 +43,6 @@ public class JMSServiceBean implements MessagingChannelService {
 
     @Override
     public MessageResponse sendAndReceiveMessage(MessageRequest messageRequest) throws Exception {
-
         MessagingConfig.JMSConfig jmsConfig = messagingConfig.getJmsQueues().get(messageRequest.getChannelName());
 
         if (null != messageRequest.getTimeout()) {

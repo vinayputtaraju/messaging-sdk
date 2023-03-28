@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.http.SdkHttpClient;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -26,7 +24,6 @@ import vinay.messagingsdk.dto.MessageRequest;
 import vinay.messagingsdk.dto.MessageResponse;
 import vinay.messagingsdk.util.Utility;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -49,10 +46,7 @@ public class SQSServiceBean implements MessagingChannelService {
             log.warn("No SQS queues configured");
         }
         Region region = Region.of(messagingConfig.getAwsRegion());
-        SdkHttpClient.Builder httpBuilder = ApacheHttpClient.builder()
-                .connectionTimeout(Duration.ofSeconds(messagingConfig.getAwsConnectTimeout()))
-                .socketTimeout(Duration.ofSeconds(messagingConfig.getAwsSocketTimeout()));
-        this.sqsClient = SqsClient.builder().region(region).httpClient(httpBuilder.build())
+        this.sqsClient = SqsClient.builder().region(region)
                 .credentialsProvider(DefaultCredentialsProvider.create()).build();
         this.messagingConfig = messagingConfig;
         this.applicationContext = applicationContext;
@@ -100,6 +94,7 @@ public class SQSServiceBean implements MessagingChannelService {
         if (null != messageRequest.getTimeout()) {
             timeout = messageRequest.getTimeout();
         }
+        log.info("sending Message : {}", messageRequest);
         Message message = sqsRequesters.get(messageRequest.getChannelName())
                 .sendMessageAndGetResponse(buildSendMessageRequest(messageRequest).build(),
                         timeout, TimeUnit.SECONDS);
