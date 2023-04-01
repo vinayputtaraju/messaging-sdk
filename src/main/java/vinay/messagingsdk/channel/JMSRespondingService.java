@@ -1,7 +1,6 @@
 package vinay.messagingsdk.channel;
 
 import jakarta.jms.Message;
-import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jms.listener.adapter.AbstractAdaptableMessageListener;
@@ -26,14 +25,12 @@ public abstract class JMSRespondingService extends AbstractAdaptableMessageListe
     @Override
     public void onMessage(Message message, Session session) {
         try {
-            //MessageProducer producer = session.createProducer(message.getJMSReplyTo());
             super.setMessageConverter(this.messageConverter);
             MessageBody messageBody = Utility.OBJECT_MAPPER.readValue(message.getBody(String.class)
                     , MessageBody.class);
             MessageResponse messageResponse = this.respondMessage(message, messageBody);
 
             handleResult(messageResponse, message, session);
-            //producer.send(this.messageConverter.toMessage(messageResponse,session));
         } catch (Exception e) {
             log.error("error while processing message", e);
             handleException(e);
@@ -43,6 +40,6 @@ public abstract class JMSRespondingService extends AbstractAdaptableMessageListe
 
     public abstract MessageResponse respondMessage(Message message, MessageBody messageBody);
 
-    void handleException(Exception e) {
+    protected void handleException(Exception e) {
     }
 }

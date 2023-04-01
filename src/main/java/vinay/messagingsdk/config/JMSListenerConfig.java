@@ -29,6 +29,7 @@ public class JMSListenerConfig implements JmsListenerConfigurer {
                 return;
             SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
             endpoint.setId(k);
+            endpoint.setConcurrency(v.getConcurrentListeners());
             endpoint.setDestination(v.getDestinationQueueName());
             JMSRespondingService jmsRespondingService = this.applicationContext.getBean(k + "JMSRespondingService", JMSRespondingService.class);
             endpoint.setMessageListener(jmsRespondingService);
