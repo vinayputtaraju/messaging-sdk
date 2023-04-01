@@ -20,6 +20,8 @@ public class MessagingConfig {
     private long awsConnectTimeout = 60l;
     private long awsSocketTimeout = 60l;
 
+    private int maxConnectionsInPool = 5;
+
     @Data
     public static class SQSConfig {
         String prefix;
@@ -39,5 +41,6 @@ public class MessagingConfig {
         String destinationQueueName;
         boolean sendMessage;
         boolean respondMessage;
+        String concurrentListeners = "5-10";
     }
 }
