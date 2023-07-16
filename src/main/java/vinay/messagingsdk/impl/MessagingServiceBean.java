@@ -23,12 +23,12 @@ public class MessagingServiceBean implements MessagingService {
     ApplicationContext applicationContext;
 
     @Override
-    public MessageResponse sendAndReceiveMessage(MessageRequest messageRequest) throws MessagingException {
+    public MessageResponse sendAndReceiveMessage(final MessageRequest messageRequest) throws MessagingException {
         if(ObjectUtils.isEmpty(messagingConfig.getChannel()))
             throw new MessagingException("Messaging channel not defined");
         try {
             MessagingChannelService messagingChannelService=applicationContext
-                    .getBean(messagingConfig.getChannel(),MessagingChannelService.class);
+                    .getBean(messagingConfig.getChannel().getServiceName(),MessagingChannelService.class);
             return messagingChannelService.sendAndReceiveMessage(messageRequest);
         } catch (Exception e) {
             log.error("error", e);

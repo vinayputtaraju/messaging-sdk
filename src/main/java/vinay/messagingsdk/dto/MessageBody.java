@@ -1,20 +1,4 @@
 package vinay.messagingsdk.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class MessageBody implements Serializable {
-
-    String operationName;
-    String requestBody;
-    String correlationId;
-    String idempotencyKey;
+public record MessageBody(String operationName, String message, String correlationId, String idempotencyKey) {
 }

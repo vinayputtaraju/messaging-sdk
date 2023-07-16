@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service(value = "SQSService")
-@ConditionalOnProperty(prefix = "messaging", name = "channel", havingValue = "SQSService")
+@ConditionalOnProperty(prefix = "messaging", name = "channel", havingValue = "SQS")
 @Slf4j
 public class SQSServiceBean implements MessagingChannelService {
     private static final String CORRELATION_ID_PARAM = "correlationId";
@@ -45,6 +45,7 @@ public class SQSServiceBean implements MessagingChannelService {
         if (CollectionUtils.isEmpty(messagingConfig.getSqsQueues())) {
             log.warn("No SQS queues configured");
         }
+        log.info("configuring SQS service");
         Region region = Region.of(messagingConfig.getAwsRegion());
         this.sqsClient = SqsClient.builder().region(region)
                 .credentialsProvider(DefaultCredentialsProvider.create()).build();
@@ -65,7 +66,6 @@ public class SQSServiceBean implements MessagingChannelService {
                         .withIdleQueueSweepingPeriod(v.getIdleQueueSweepingPeriod(), TimeUnit.SECONDS)
                         .withQueueAttributes(map)
                         .build());
-                log.info("RedrivePolicy : {}", map.get("RedrivePolicy"));
             }
             if (v.isRespondMessage()) {
                 sqsResponders.put(k, AmazonSQSResponderClientBuilder.standard().withAmazonSQS(sqsClient)
@@ -89,12 +89,12 @@ public class SQSServiceBean implements MessagingChannelService {
     }
 
     @Override
-    public MessageResponse sendAndReceiveMessage(MessageRequest messageRequest) throws Exception {
-        int timeout = messageRequest.getTimeout();
+    public MessageResponse sendAndReceiveMessage(final MessageRequest messageRequest) throws Exception {
+        int timeout = messagingConfig.getDefaultReceiveTimeout();
         if (null != messageRequest.getTimeout()) {
             timeout = messageRequest.getTimeout();
         }
-        log.info("sending Message : {}", messageRequest);
+        log.debug("sending Message : {}", messageRequest);
         Message message = sqsRequesters.get(messageRequest.getChannelName())
                 .sendMessageAndGetResponse(buildSendMessageRequest(messageRequest).build(),
                         timeout, TimeUnit.SECONDS);
@@ -105,7 +105,7 @@ public class SQSServiceBean implements MessagingChannelService {
     private void respondMessage(Message message, String channelName) {
         try {
             MessageBody messageBody = Utility.OBJECT_MAPPER.readValue(message.body(), MessageBody.class);
-            log.info("Message Received : {}", messageBody);
+            log.debug("Message Received : {}", messageBody);
             MessageResponse messageResponse = sqsRespondingService(channelName).respondMessage(message, messageBody);
             this.sqsResponders.get(channelName).sendResponseMessage(MessageContent.fromMessage(message),
                     new MessageContent(Utility.OBJECT_MAPPER.writeValueAsString(messageResponse)));
@@ -115,11 +115,11 @@ public class SQSServiceBean implements MessagingChannelService {
     }
 
     private void exceptionHandler(Exception e, String channelName) {
-        log.error("error", e);
+        log.error("error while processing message", e);
         try {
             sqsRespondingService(channelName).handleException(e);
         } catch (Exception ex) {
-            log.error("error", ex);
+            log.error("error while processing exception handler", ex);
         }
     }
 
@@ -133,7 +133,6 @@ public class SQSServiceBean implements MessagingChannelService {
                 .queueUrl(messagingConfig.getSqsQueues().get(messageRequest.getChannelName()).getQueueUrl());
         if (!ObjectUtils.isEmpty(messageRequest.getDelayMessageInSeconds()))
             builder.delaySeconds(messageRequest.getDelayMessageInSeconds());
-
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
 
         if (!CollectionUtils.isEmpty(messageRequest.getMessageAttributes())) {
@@ -141,9 +140,9 @@ public class SQSServiceBean implements MessagingChannelService {
                     messageAttributes.put(k, MessageAttributeValue.builder().dataType("String").stringValue(v).build()));
         }
 
-        if (!ObjectUtils.isEmpty(messageRequest.getMessageBody().getCorrelationId())) {
-            messageRequest.getMessageAttributes().forEach((k, v) ->
-                    messageAttributes.put(CORRELATION_ID_PARAM, MessageAttributeValue.builder().dataType("String").stringValue(v).build()));
+        if (!ObjectUtils.isEmpty(messageRequest.getMessageBody().correlationId())) {
+            messageAttributes.put(CORRELATION_ID_PARAM, MessageAttributeValue.builder().dataType("String")
+                    .stringValue(messageRequest.getMessageBody().correlationId()).build());
         }
         if (!CollectionUtils.isEmpty(messageAttributes)) {
             builder.messageAttributes(messageAttributes);

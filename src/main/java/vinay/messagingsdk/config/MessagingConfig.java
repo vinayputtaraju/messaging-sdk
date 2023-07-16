@@ -11,10 +11,8 @@ import java.util.Map;
 @Component
 @ConfigurationProperties(prefix = "messaging")
 public class MessagingConfig {
-
-    private String channel;
+    private Channel channel;
     private Map<String, SQSConfig> sqsQueues = new HashMap<>();
-    private Map<String, JMSConfig> jmsQueues = new HashMap<>();
     int defaultReceiveTimeout = 10;
     private String awsRegion = "us-east-1";
     private long awsConnectTimeout = 60l;
@@ -36,11 +34,16 @@ public class MessagingConfig {
         boolean respondMessage;
     }
 
-    @Data
-    public static class JMSConfig {
-        String destinationQueueName;
-        boolean sendMessage;
-        boolean respondMessage;
-        String concurrentListeners = "5-10";
+    public enum Channel {
+        SQS("SQSService");
+        private String serviceName;
+
+        Channel(String serviceName) {
+            this.serviceName = serviceName;
+        }
+
+        public String getServiceName() {
+            return this.serviceName;
+        }
     }
 }

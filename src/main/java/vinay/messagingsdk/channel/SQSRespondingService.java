@@ -6,7 +6,7 @@ import vinay.messagingsdk.dto.MessageResponse;
 
 public interface SQSRespondingService {
 
-    public MessageResponse respondMessage(Message message, MessageBody messageBody);
+    MessageResponse respondMessage(Message message, MessageBody messageBody);
 
     default void handleException(Exception e){
 

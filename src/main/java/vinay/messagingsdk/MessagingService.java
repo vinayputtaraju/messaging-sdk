@@ -6,5 +6,5 @@ import vinay.messagingsdk.exception.MessagingException;
 
 public interface MessagingService {
 
-    MessageResponse sendAndReceiveMessage(MessageRequest messageRequest) throws MessagingException;
+    MessageResponse sendAndReceiveMessage(final MessageRequest messageRequest) throws MessagingException;
 }
