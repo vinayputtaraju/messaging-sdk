@@ -48,3 +48,65 @@ messaging:
       sendMessage: true
       respondMessage: false
 ```
+
+Usage sample for Client to sendAndReceiveMessage
+
+```java
+import jakarta.annotation.Resource;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import vinay.messagingsdk.MessagingService;
+import vinay.messagingsdk.dto.MessageBody;
+import vinay.messagingsdk.dto.MessageRequest;
+import vinay.messagingsdk.dto.MessageResponse;
+import vinay.messagingsdk.impl.MessagingServiceBean;
+
+import java.util.HashMap;
+
+@Service
+public class Sample {
+
+    @Resource
+    MessagingServiceBean messagingService;
+
+    public void test() {
+        MessageBody messageBody = new MessageBody("operationName",
+                "request", //Actual message as String
+                "correlationId",
+                "idempotencyKey");
+        MessageRequest messageRequest = MessageRequest.builder()
+                .channelName("sample1") // channel name to use the configs from application config
+                .messageBody(messageBody) // MessageBody
+                .messageAttributes(new HashMap<>()) // to add any message attributes
+                .delayMessageInSeconds(0) // delay time in seconds to delay the message delivery to consumer
+                .timeout(10) // Timeperiod to wait for the response
+                .build();
+        MessageResponse messageResponse = this.messagingService
+                .sendAndReceiveMessage(messageRequest).messageBody();
+    }
+}
+```
+
+Usage sample for Consumer to consume and respond Message
+
+```java
+import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.sqs.model.Message;
+import vinay.messagingsdk.channel.SQSRespondingService;
+import vinay.messagingsdk.dto.MessageBody;
+import vinay.messagingsdk.dto.MessageResponse;
+
+@Service("Sample1RespondingService")
+// Service name should be defined as <channel name as in application config> + "RespondingService"
+public class Sample implements SQSRespondingService { // implemet SQSRespondingService
+
+    @Override
+    public MessageResponse respondMessage(Message message, MessageBody messageBody ) { // request messageBody
+        return new MessageResponse(true, new MessageBody(messageBody.operationName(),
+                "response message",// response message
+                messageBody.correlationId(), messageBody.idempotencyKey()));;
+    }
+}
+```
+
+Sample Ref implementation : https://github.com/vinayputtaraju/client-consumer
